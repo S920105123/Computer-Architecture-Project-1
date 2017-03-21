@@ -9,7 +9,7 @@
 
 struct Instruction {
 	int opcode, funct;
-	int dest, src1, src2;
+	int rs,rt,rd;
 	int immediate;
 };
 

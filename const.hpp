@@ -24,6 +24,6 @@ const int J     = 0x02,  JAL   = 0x03,  HALT  = 0x3F;
 
 /* Store the name of every instruction. Call init_const() to init. */
 extern std::string inst_str_r[256], inst_str[256];
-void init_const();
+void init_str_const();
 
 #endif

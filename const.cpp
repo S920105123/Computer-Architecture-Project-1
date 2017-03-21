@@ -3,7 +3,7 @@
 
 std::string inst_str_r[256], inst_str[256];
 
-void init_const()
+void init_str_const()
 {
 	/* This function initialize inst_str with corresponding
 	   instructions' name. These names are for debugging. */

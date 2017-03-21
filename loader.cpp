@@ -4,6 +4,12 @@
 #include "const.hpp"
 #include "loader.hpp"
 
+inline bool un_signed(int opcode)
+{
+	/* Whether I-format inst immediate is unsigned or not. */
+	return opcode==ADDIU || opcode==ANDI || opcode==ORI || opcode==NORI;
+}
+
 inline int btol(int target)
 {
 	/* This function conducts the convertion between
@@ -26,18 +32,21 @@ void parse(Instruction *inst, int word)
 	int mask5=0x1F, mask6=0x3F, mask16=0xFFFF, mask26=0x3FFFFFF;
 	inst->opcode=(word>>26)&mask6;
 	if (inst->opcode==0) {
-		inst->src1=(word>>21)&mask5;
-		inst->src2=(word>>16)&mask5;
-		inst->dest=(word>>11)&mask5;
+		inst->rs=(word>>21)&mask5;
+		inst->rt=(word>>16)&mask5;
+		inst->rd=(word>>11)&mask5;
 		inst->immediate=(word>>6)&mask5;
 		inst->funct=word&mask6;
 	} else {
 		if (inst->opcode==J || inst->opcode==JAL) {
 			inst->immediate=word&mask26;
 		} else if (inst->opcode!=HALT) {
-			inst->src1=(word>>21)&mask5;
-			inst->dest=(word>>16)&mask5;
+			inst->rs=(word>>21)&mask5;
+			inst->rt=(word>>16)&mask5;
 			inst->immediate=word&mask16;
+			if (!un_signed(inst->opcode) && ((inst->immediate>>15)&1)) {
+				inst->immediate|=0xFFFF0000;
+			} 
 		}
 	}
 }
@@ -45,16 +54,16 @@ void parse(Instruction *inst, int word)
 void print_inst(const Instruction *target)
 {
 	/* This function print an instruction. (for debugging) */
-	init_const();
+	init_str_const();
 	if (target->opcode==0) {
 		std::cout<<inst_str_r[target->funct];
-		std::cout<<" "<<target->dest<<" "<<target->src1<<" "<<target->src2;
+		std::cout<<" "<<target->rd<<" "<<target->rs<<" "<<target->rt;
 	} else {
 		std::cout<<inst_str[target->opcode];
 		if (target->opcode==J || target->opcode==JAL) {
 			std::cout<<" "<<target->immediate;
 		} else if (target->opcode!=HALT) {
-			std::cout<<" "<<target->dest<<" "<<target->src1<<" "<<target->immediate;
+			std::cout<<" "<<target->rt<<" "<<target->rs<<" "<<target->immediate;
 		}
 	}
 	std::cout<<std::endl;
@@ -76,14 +85,14 @@ void load_img(Instruction *inst, int *stk, int &PC, int &num_inst, int &sp)
 	PC=btol(PC);
 	num_inst=btol(num_inst);
 	for (i=0;i<PC;i++) {
-		inst[i].opcode=inst[i].src1=inst[i].src2=inst[i].dest=inst[i].funct=inst[i].immediate=0;
+		inst[i].opcode=inst[i].rs=inst[i].rt=inst[i].rd=inst[i].funct=inst[i].immediate=0;
 	}
 	for (;i<PC+num_inst;i++) {
 		i_img.read((char*)&word,4);
 		parse(&inst[i],word);
 	}
 	for (;i<1024;i++) {
-		inst[i].opcode=inst[i].src1=inst[i].src2=inst[i].dest=inst[i].funct=inst[i].immediate=0;
+		inst[i].opcode=inst[i].rs=inst[i].rt=inst[i].rd=inst[i].funct=inst[i].immediate=0;
 	}
 	
 	/* Load stack data image. */
