@@ -1,2 +1,3 @@
-g++ -std=c++11 *.cpp *.hpp -O2 -o out.exe
-./out.exe
+g++ -std=c++11 *.cpp *.hpp -O2 -c
+g++ -std=c++11 *.o -O2
+./a.exe

@@ -1,12 +1,12 @@
 #include <string>
 #include "const.hpp"
-//#define CONST_TEST // Enable debug mode
 
 std::string inst_str_r[256], inst_str[256];
 
 void init_const()
 {
-	/* This function initialize inst_str with corresponding instructions' name. */
+	/* This function initialize inst_str with corresponding
+	   instructions' name. These names are for debugging. */
 	for (int i=0;i<256;i++) {
 		inst_str_r[i] = inst_str[i] = "undefined";
 	}
@@ -53,12 +53,3 @@ void init_const()
     inst_str[JAL]="jal";
     inst_str[HALT]="halt";
 }
-
-#ifdef CONST_TEST
-int main() {
-	init_const();
-	for (int i=0;i<256;i++) {
-		std::cout<<inst_str_r[i]<<' '<<inst_str[i]<<"\n";
-	}
-}
-#endif
