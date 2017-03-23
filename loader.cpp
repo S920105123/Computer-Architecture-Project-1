@@ -4,6 +4,10 @@
 #include "const.hpp"
 #include "loader.hpp"
 
+/* Memories */
+int mem[1024];
+Instruction inst[1024];
+
 inline bool un_signed(int opcode)
 {
 	/* Whether I-format inst immediate is unsigned or not. */
@@ -69,11 +73,11 @@ void print_inst(const Instruction *target)
 	std::cout<<std::endl;
 }
 
-void load_img(Instruction *inst, int *stk, int &PC, int &num_inst, int &sp)
+void load_img(Instruction *inst, int *stk, int &PC, int &num_inst, int &num_word, int &sp)
 {
 	/* This function load iimage & dimage then reset instruction set(inst),
 	   stack(stk), initial PC, number of instructions and stack pointer(sp).  */
-	int word,num_word,i;
+	int word,i;
 	std::ifstream d_img, i_img;
 	
 	d_img.open("dimage.bin",std::ios_base::in | std::ios_base::binary);

@@ -2,12 +2,11 @@
 #define DATAPATH_H
 
 #include "loader.hpp"
-
-/* Memories */
-int stack[1024];
-Instruction inst[1024];
+#include <queue>
 
 /* Registers */
-int PC,HI,LO,reg[32],&sp=reg[29];
+extern int reg[35], HI, LO, &PC;
+extern int pre_reg[35], &pre_PC;
+extern std::queue<int> change;
 
 #endif

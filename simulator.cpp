@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <fstream>
 
-int num_inst;
+int num_inst, num_word, cycle;
 
 void simulate()
 {
@@ -14,7 +14,7 @@ void simulate()
 
 int main()
 {
-	load_img(inst,stack,PC,num_inst,sp);
+	load_img(inst,stack,PC,num_inst,num_word,sp);
 	simulate();
 	for (int i=PC;i<PC+num_inst;i++) {
 		print_inst(&inst[i]);
