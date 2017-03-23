@@ -32,7 +32,7 @@ void init_str_const()
     
     /* Others */
     inst_str[ADDI]="addi";
-    inst_str[ADDU]="addu";
+    inst_str[ADDIU]="addiu";
     inst_str[LW]="lw";
     inst_str[LH]="lh";
     inst_str[LHU]="lhu";

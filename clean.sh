@@ -1,1 +1,1 @@
-rm *.o *.exe *.out *.gch *.stackdump
+rm *.tmp *.o *.exe *.out *.gch *.stackdump

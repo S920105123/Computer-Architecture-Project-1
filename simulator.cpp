@@ -8,6 +8,7 @@
 
 std::ofstream fout;
 int num_inst, num_word, cycle;
+bool stop_simulate;
 
 inline void print_reg(int idx, bool &first) {
 	static std::string reg_str[3]={"$HI","$LO","PC"};
@@ -48,7 +49,7 @@ void simulate()
 {	
 	init_str_const();
 	int idx=(PC>>2), opcode=inst[idx].opcode, funct=inst[idx].funct;
-	while (opcode!=HALT) {
+	while (opcode!=HALT && !stop_simulate) {
 		cycle++;
 		std::cerr<<"cycle "<<std::dec<<cycle<<": ";
 		std::cerr<<reg[4]<<" ";

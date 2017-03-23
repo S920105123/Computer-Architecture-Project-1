@@ -8,9 +8,10 @@ extern int btol(int target);
 extern short h_btol(short target);
 
 /* Registers */
+std::queue<int> change;
 int reg[35], HI=32, LO=33, &PC=reg[34], &sp=reg[29];
 int pre_reg[35], &pre_PC=pre_reg[34];
-std::queue<int> change;
+bool hilo_used=false;
 
 /* Function pointers */
 void (*R_func[64])();
@@ -19,78 +20,127 @@ void (*func[64])();
 /* R-format instructions */
 void inst_add() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=reg[rs]+reg[rt];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rs]+reg[rt];
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_addu() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=reg[rs]+reg[rt];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rs]+reg[rt];
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_sub() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=reg[rs]-reg[rt];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rs]-reg[rt];
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_and() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=reg[rs]&reg[rt];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rs]&reg[rt];
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_or() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=reg[rs]|reg[rt];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rs]|reg[rt];
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_xor() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=reg[rs]^reg[rt];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rs]^reg[rt];
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_nor() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=~(reg[rs]|reg[rt]);
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=~(reg[rs]|reg[rt]);
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_nand() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=!(reg[rs]&reg[rt]);
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=!(reg[rs]&reg[rt]);
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_slt() {
 	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	reg[rd]=reg[rs]<reg[rt];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rs]<reg[rt];
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_sll() {
 	int rd=inst[PC>>2].rd, rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
-	reg[rd]=reg[rt]<<immediate;
-	change.push(rd);
+	if (rd==0 && (rt!=0||immediate!=0)) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rt]<<immediate;
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_srl() {
 	int rd=inst[PC>>2].rd, rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
-	if (immediate!=0) {
-		change.push(rd);
-		reg[rd]=reg[rt]>>1;
-		reg[rd]=reg[rd]&0x7FFFFFFF;
-		reg[rd]=reg[rd]>>(immediate-1);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		if (immediate!=0) {
+			
+			change.push(rd);
+			reg[rd]=reg[rt]>>1;
+			reg[rd]=reg[rd]&0x7FFFFFFF;
+			reg[rd]=reg[rd]>>(immediate-1);
+		}
 	}
 	PC=PC+4;
 }
 void inst_sra() {
 	int rd=inst[PC>>2].rd, rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
-	reg[rd]=reg[rt]>>immediate;
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[rt]>>immediate;
+		change.push(rd);
+	}
 	PC=PC+4;
 }
 void inst_jr() {
@@ -100,8 +150,13 @@ void inst_jr() {
 void inst_mult() {
 	int rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	long long res=reg[rs];
+	if (hilo_used) {
+		error(OVERWRITE_HILO);
+	} else {
+		hilo_used=true;
+	}
 	res=res*reg[rt];
-	reg[HI]=res&0xFFFFFFFF00000000;
+	reg[HI]=res>>32;
 	reg[LO]=res&0x00000000FFFFFFFF;
 	change.push(HI);
 	change.push(LO);
@@ -109,73 +164,116 @@ void inst_mult() {
 }
 void inst_multu() {
 	int rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	unsigned long long res=(unsigned long long)reg[rs]*(unsigned long long)reg[rt];
-	reg[HI]=res&0xFFFFFFFF00000000;
-	reg[LO]=res&0x00000000FFFFFFFF;
+	unsigned long long res=(unsigned int)reg[rs];
+	res=res*(unsigned int)reg[rt];
+	if (hilo_used) {
+		error(OVERWRITE_HILO);
+	} else {
+		hilo_used=true;
+	}
+	reg[HI]=res>>32;
+	reg[LO]=res&(long long)0x00000000FFFFFFFF;
 	change.push(HI);
 	change.push(LO);
 	PC=PC+4;
 }
 void inst_mfhi() {
 	int rd=inst[PC>>2].rd;
-	reg[rd]=reg[HI];
-	change.push(rd);
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[HI];
+		change.push(rd);
+	}
+	hilo_used=false;
 	PC=PC+4;
 }
 void inst_mflo() {
 	int rd=inst[PC>>2].rd;
-	reg[rd]=reg[LO];
-	change.push(rd);
+	hilo_used=false;
+	if (rd==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rd]=reg[LO];
+		change.push(rd);
+	}	
 	PC=PC+4;
 }
 
 /* I-format instructions */
 void inst_addi() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	std::cerr<<reg[rt]<<' '<<reg[rs]<<' '<<immediate<<'\n';
-	reg[rt]=reg[rs]+immediate;
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=reg[rs]+immediate;
+		change.push(rt);
+	}
 	PC=PC+4;
 }
 void inst_addiu() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=reg[rs]+immediate;
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=reg[rs]+immediate;
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_lw() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=mem[reg[rs]+(immediate>>2)];
-	reg[rt]=btol(reg[rt]);
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=mem[reg[rs]+(immediate>>2)];
+		reg[rt]=btol(reg[rt]);
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_lh() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=*((short*)mem+reg[rs]+(immediate>>1));
-	reg[rt]=h_btol((short)reg[rt]);
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=*((short*)mem+reg[rs]+(immediate>>1));
+		reg[rt]=h_btol((short)reg[rt]);
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_lhu() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=*((unsigned short*)mem+reg[rs]+(immediate>>1));
-	reg[rt]=(unsigned short)h_btol(reg[rt]);
-	reg[rt]=reg[rt]&0x0000FFFF;  // Just in case.
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=*((unsigned short*)mem+reg[rs]+(immediate>>1));
+		reg[rt]=(unsigned short)h_btol(reg[rt]);
+		reg[rt]=reg[rt]&0x0000FFFF;  // Just in case.
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_lb() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=*((char*)mem+reg[rs]+immediate);
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=*((char*)mem+reg[rs]+immediate);
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_lbu() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=*((unsigned char*)mem+reg[rs]+immediate);
-	reg[rt]=reg[rt]&0x000000FF;  // Just in case.
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=*((unsigned char*)mem+reg[rs]+immediate);
+		reg[rt]=reg[rt]&0x000000FF;  // Just in case.
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_sw() {
@@ -195,32 +293,52 @@ void inst_sb() {
 }
 void inst_lui() {
 	int rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
-	reg[rt]=immediate<<16;
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=immediate<<16;
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_andi() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=reg[rs]&immediate;
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=reg[rs]&immediate;
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_ori() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=reg[rs]|immediate;
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=reg[rs]|immediate;
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_nori() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=~(reg[rs]|immediate);
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=~(reg[rs]|immediate);
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_slti() {
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	reg[rt]=reg[rs]<immediate;
-	change.push(rt);
+	if (rt==0) {
+		error(WRITE_ZERO);
+	} else {
+		reg[rt]=reg[rs]<immediate;
+		change.push(rt);
+	} 
 	PC=PC+4;
 }
 void inst_beq() {

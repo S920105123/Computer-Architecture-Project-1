@@ -11,7 +11,7 @@ Instruction inst[1024];
 inline bool un_signed(int opcode)
 {
 	/* Whether I-format inst immediate is unsigned or not. */
-	return opcode==ADDIU || opcode==ANDI || opcode==ORI || opcode==NORI;
+	return opcode==ANDI || opcode==ORI || opcode==NORI;
 }
 int btol(int target){
 	/* This function conducts the convertion between

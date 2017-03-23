@@ -15,7 +15,7 @@ void error(int type)
 {
 	/* This function print error message in 
 	   error_dump.rpt depends on error code "type" */
-	ferr<<"In cycle"<<cycle<<": "<<err_str[type];
+	ferr<<"In cycle "<<cycle<<": "<<err_str[type];
 }
 
 void init_error()
