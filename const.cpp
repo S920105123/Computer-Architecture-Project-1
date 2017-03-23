@@ -34,7 +34,7 @@ void init_str_const()
     inst_str[ADDI]="addi";
     inst_str[ADDU]="addu";
     inst_str[LW]="lw";
-    inst_str[LH]="lu";
+    inst_str[LH]="lh";
     inst_str[LHU]="lhu";
     inst_str[LB]="lb";
     inst_str[LBU]="lbu";

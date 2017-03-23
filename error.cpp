@@ -11,14 +11,14 @@ std::string err_str[5] = {
 	"Misalignment Error\n"
 };
 
-inline void error(int type)
+void error(int type)
 {
 	/* This function print error message in 
 	   error_dump.rpt depends on error code "type" */
 	ferr<<"In cycle"<<cycle<<": "<<err_str[type];
 }
 
-inline void error_init()
+void init_error()
 {
 	/* Initialize */
 	ferr.open("my_error_dump.rpt",std::ios_base::out);

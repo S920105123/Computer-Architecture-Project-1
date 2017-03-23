@@ -1,6 +1,11 @@
 #include "error.hpp"
 #include "datapath.hpp"
+#include "loader.hpp" 
 #include <queue>
+
+/* Convesion between big/little endian */
+extern int btol(int target);
+extern short h_btol(short target);
 
 /* Registers */
 int reg[35], HI=32, LO=33, &PC=reg[34], &sp=reg[29];
@@ -13,67 +18,67 @@ void (*func[64])();
 
 /* R-format instructions */
 void inst_add() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=reg[rs]+reg[rt];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_addu() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=reg[rs]+reg[rt];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_sub() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=reg[rs]-reg[rt];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_and() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=reg[rs]&reg[rt];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_or() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=reg[rs]|reg[rt];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_xor() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=reg[rs]^reg[rt];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_nor() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=~(reg[rs]|reg[rt]);
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_nand() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=!(reg[rs]&reg[rt]);
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_slt() {
-	int rd=inst[PC].rd, rs=inst[PC].rs, rt=inst[PC].rt;
+	int rd=inst[PC>>2].rd, rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	reg[rd]=reg[rs]<reg[rt];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_sll() {
-	int rd=inst[PC].rd, rt=inst[PC].rt, immediate=inst[PC].immediate;
+	int rd=inst[PC>>2].rd, rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
 	reg[rd]=reg[rt]<<immediate;
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_srl() {
-	int rd=inst[PC].rd, rt=inst[PC].rt, immediate=inst[PC].immediate;
+	int rd=inst[PC>>2].rd, rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
 	if (immediate!=0) {
 		change.push(rd);
 		reg[rd]=reg[rt]>>1;
@@ -83,18 +88,17 @@ void inst_srl() {
 	PC=PC+4;
 }
 void inst_sra() {
-	int rd=inst[PC].rd, rt=inst[PC].rt, immediate=inst[PC].immediate;
+	int rd=inst[PC>>2].rd, rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
 	reg[rd]=reg[rt]>>immediate;
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_jr() {
-	int rs=inst[PC].rs;
+	int rs=inst[PC>>2].rs;
 	PC=reg[rs];
-	PC=PC+4;
 }
 void inst_mult() {
-	int rs=inst[PC].rs, rt=inst[PC].rt;
+	int rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	long long res=reg[rs];
 	res=res*reg[rt];
 	reg[HI]=res&0xFFFFFFFF00000000;
@@ -104,7 +108,7 @@ void inst_mult() {
 	PC=PC+4;
 }
 void inst_multu() {
-	int rs=inst[PC].rs, rt=inst[PC].rt;
+	int rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
 	unsigned long long res=(unsigned long long)reg[rs]*(unsigned long long)reg[rt];
 	reg[HI]=res&0xFFFFFFFF00000000;
 	reg[LO]=res&0x00000000FFFFFFFF;
@@ -113,13 +117,13 @@ void inst_multu() {
 	PC=PC+4;
 }
 void inst_mfhi() {
-	int rd=inst[PC].rd;
+	int rd=inst[PC>>2].rd;
 	reg[rd]=reg[HI];
 	change.push(rd);
 	PC=PC+4;
 }
 void inst_mflo() {
-	int rd=inst[PC].rd;
+	int rd=inst[PC>>2].rd;
 	reg[rd]=reg[LO];
 	change.push(rd);
 	PC=PC+4;
@@ -127,120 +131,127 @@ void inst_mflo() {
 
 /* I-format instructions */
 void inst_addi() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	std::cerr<<reg[rt]<<' '<<reg[rs]<<' '<<immediate<<'\n';
 	reg[rt]=reg[rs]+immediate;
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_addiu() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	reg[rt]=reg[rs]+immediate;
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_lw() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
-	reg[rt]=mem[reg[rs]+immediate];
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	reg[rt]=mem[reg[rs]+(immediate>>2)];
+	reg[rt]=btol(reg[rt]);
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_lh() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
-	reg[rt]=*((short*)mem+reg[rs]+immediate);
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	reg[rt]=*((short*)mem+reg[rs]+(immediate>>1));
+	reg[rt]=h_btol((short)reg[rt]);
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_lhu() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
-	reg[rt]=*((unsigned short*)mem+reg[rs]+immediate);
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	reg[rt]=*((unsigned short*)mem+reg[rs]+(immediate>>1));
+	reg[rt]=(unsigned short)h_btol(reg[rt]);
+	reg[rt]=reg[rt]&0x0000FFFF;  // Just in case.
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_lb() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	reg[rt]=*((char*)mem+reg[rs]+immediate);
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_lbu() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	reg[rt]=*((unsigned char*)mem+reg[rs]+immediate);
+	reg[rt]=reg[rt]&0x000000FF;  // Just in case.
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_sw() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
-	mem[reg[rs]+immediate]=reg[rt];
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	mem[reg[rs]+(immediate>>2)]=btol(reg[rt]);
 	PC=PC+4;
 }
 void inst_sh() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
-	*((short*)mem+reg[rs]+immediate)=reg[rt]&0x0000FFFF;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	*((short*)mem+reg[rs]+(immediate>>1))=btol(reg[rt])&0x0000FFFF;
 	PC=PC+4;
 }
 void inst_sb() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
-	*((char*)mem+reg[rs]+immediate)=reg[rt]&0x000000FF;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	*((char*)mem+reg[rs]+immediate)=btol(reg[rt])&0x000000FF;
 	PC=PC+4;
 }
 void inst_lui() {
-	int rt=inst[PC].rt, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, immediate=inst[PC>>2].immediate;
 	reg[rt]=immediate<<16;
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_andi() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	reg[rt]=reg[rs]&immediate;
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_ori() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	reg[rt]=reg[rs]|immediate;
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_nori() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	reg[rt]=~(reg[rs]|immediate);
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_slti() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	reg[rt]=reg[rs]<immediate;
 	change.push(rt);
 	PC=PC+4;
 }
 void inst_beq() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (reg[rs]==reg[rt]) {
 		PC=PC+4*immediate;
 	}
 	PC=PC+4;
 }
 void inst_bne() {
-	int rt=inst[PC].rt, rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (reg[rs]!=reg[rt]) {
 		PC=PC+4*immediate;
 	}
 	PC=PC+4;
 }
 void inst_bgtz() {
-	int rs=inst[PC].rs, immediate=inst[PC].immediate;
+	int rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (reg[rs]>0) {
 		PC=PC+4*immediate;
 	}
 	PC=PC+4;
 }
 void inst_j() {
-	int immediate=inst[PC].immediate;
+	int immediate=inst[PC>>2].immediate;
 	PC=((PC+4)&0xF0000000)|(4*immediate);
 }
 void inst_jal() {
-	int immediate=inst[PC].immediate;
+	int immediate=inst[PC>>2].immediate;
 	reg[31]=PC+4;
+	change.push(31);
 	PC=((PC+4)&0xF0000000)|(4*immediate);
 }
 

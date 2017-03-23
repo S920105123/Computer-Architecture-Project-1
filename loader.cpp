@@ -13,9 +13,7 @@ inline bool un_signed(int opcode)
 	/* Whether I-format inst immediate is unsigned or not. */
 	return opcode==ADDIU || opcode==ANDI || opcode==ORI || opcode==NORI;
 }
-
-inline int btol(int target)
-{
+int btol(int target){
 	/* This function conducts the convertion between
 	   big-endian numbers and little-endian numbers. */
 	char *bytes=(char*)&target, temp;
@@ -26,6 +24,17 @@ inline int btol(int target)
 	bytes[1]=bytes[2];
 	bytes[2]=temp;
 	return *(int*)bytes;
+}
+
+short h_btol(short target)
+{
+	/* This function conducts the convertion between
+	   big-endian numbers and little-endian numbers. */
+	char *bytes=(char*)&target, temp;
+	temp=bytes[0];
+	bytes[0]=bytes[1];
+	bytes[1]=temp;
+	return *(short*)bytes;
 }
 
 void parse(Instruction *inst, int word)
@@ -58,22 +67,26 @@ void parse(Instruction *inst, int word)
 void print_inst(const Instruction *target)
 {
 	/* This function print an instruction. (for debugging) */
-	init_str_const();
+	static bool first=true;
+	if (first) {
+		first=false;
+		init_str_const();
+	}
 	if (target->opcode==0) {
-		std::cout<<inst_str_r[target->funct];
-		std::cout<<" "<<target->rd<<" "<<target->rs<<" "<<target->rt;
+		std::cerr<<inst_str_r[target->funct];
+		std::cerr<<std::dec<<" "<<target->rd<<" "<<target->rs<<" "<<target->rt;
 	} else {
-		std::cout<<inst_str[target->opcode];
+		std::cerr<<inst_str[target->opcode];
 		if (target->opcode==J || target->opcode==JAL) {
-			std::cout<<" "<<target->immediate;
+			std::cerr<<std::hex<<" "<<target->immediate;
 		} else if (target->opcode!=HALT) {
-			std::cout<<" "<<target->rt<<" "<<target->rs<<" "<<target->immediate;
+			std::cerr<<std::dec<<" "<<target->rt<<" "<<target->rs<<" "<<target->immediate;
 		}
 	}
 	std::cout<<std::endl;
 }
 
-void load_img(Instruction *inst, int *stk, int &PC, int &num_inst, int &num_word, int &sp)
+void load_img(int &PC, int &num_inst, int &num_word, int &sp)
 {
 	/* This function load iimage & dimage then reset instruction set(inst),
 	   stack(stk), initial PC, number of instructions and stack pointer(sp).  */
@@ -88,10 +101,10 @@ void load_img(Instruction *inst, int *stk, int &PC, int &num_inst, int &num_word
 	i_img.read((char*)&num_inst,4);
 	PC=btol(PC);
 	num_inst=btol(num_inst);
-	for (i=0;i<PC;i++) {
+	for (i=0;i<PC/4;i++) {
 		inst[i].opcode=inst[i].rs=inst[i].rt=inst[i].rd=inst[i].funct=inst[i].immediate=0;
 	}
-	for (;i<PC+num_inst;i++) {
+	for (;i<PC/4+num_inst;i++) {
 		i_img.read((char*)&word,4);
 		parse(&inst[i],word);
 	}
@@ -99,17 +112,16 @@ void load_img(Instruction *inst, int *stk, int &PC, int &num_inst, int &num_word
 		inst[i].opcode=inst[i].rs=inst[i].rt=inst[i].rd=inst[i].funct=inst[i].immediate=0;
 	}
 	
-	/* Load stack data image. */
+	/* Load memory data image. */
 	d_img.read((char*)&sp,4);
 	d_img.read((char*)&num_word,4);
 	sp=btol(sp);
 	num_word=btol(num_word);
 	for (i=0;i<num_word;i++) {
-		d_img.read((char*)&stk[i],4);
-		stk[i]=btol(stk[i]);
+		d_img.read((char*)&mem[i],4);
 	}
 	for (;i<1024;i++) {
-		stk[i]=0;
+		mem[i]=0;
 	}
 	
 	i_img.close();

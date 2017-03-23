@@ -1,7 +1,6 @@
 #ifndef DATAPATH_H
 #define DATAPATH_H
 
-#include "loader.hpp"
 #include <queue>
 
 /* Registers */
