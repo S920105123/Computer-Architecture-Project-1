@@ -21,5 +21,5 @@ inline void error(int type)
 inline void error_init()
 {
 	/* Initialize */
-	ferr.open("error_dump.rpt",std::ios_base::out);
+	ferr.open("my_error_dump.rpt",std::ios_base::out);
 }

@@ -3,7 +3,7 @@
 #include <queue>
 
 /* Registers */
-int reg[35], HI=32, LO=33, &PC=reg[34];
+int reg[35], HI=32, LO=33, &PC=reg[34], &sp=reg[29];
 int pre_reg[35], &pre_PC=pre_reg[34];
 std::queue<int> change;
 
