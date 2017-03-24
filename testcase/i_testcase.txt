@@ -1,0 +1,8 @@
+0
+add 5 6 0 0
+addu 6 4 3 0
+lui 5 6 0xFFFF
+addi 6 6 0xFFFF
+sw 6 5 1
+j 16
+halt

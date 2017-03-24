@@ -21,9 +21,9 @@ int main()
 	}
 	sp=btol(sp);
 	word=btol(i);
-	iimg.write((char*)&sp,4);
-	iimg.write((char*)&word,4);
-	iimg.write((char*)buffer,i*4);
+	dimg.write((char*)&sp,4);
+	dimg.write((char*)&word,4);
+	dimg.write((char*)buffer,i*4);
 }
 
 int btol(int target){

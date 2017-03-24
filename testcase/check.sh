@@ -1,5 +1,5 @@
-./i_generator.exe
-./d_generator.exe
+./i_generator
+./d_generator
 cp dimage.bin ../residence_of_golden/dimage.bin
 cp iimage.bin ../residence_of_golden/iimage.bin
 cp dimage.bin ../simulator/dimage.bin

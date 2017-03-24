@@ -2,6 +2,5 @@
 *.gch
 *.exe
 *.out
-*.txt
 *.stackdump
 *.tmp
