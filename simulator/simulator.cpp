@@ -89,7 +89,7 @@ int main()
 	init_const();
 	init_datapath();
 	load_img(PC,num_inst,num_word,sp);
-	fout.open("my_snapshot.rpt",std::ios_base::out);
+	fout.open("snapshot.rpt",std::ios_base::out);
 	
 	#ifdef DEBUG
 	for (int i=PC>>2;i<(PC>>2)+num_inst;i++) {
@@ -98,11 +98,11 @@ int main()
 	for (int i=0;i<num_word;i++) {
 		std::cerr<<std::hex<<mem[i]<<std::endl;
 	}
+	#endif
 	for (int i=0;i<35;i++) {
 		print_reg(i,first);
 	}
 	fout<<"\n\n";
-	#endif
 	
 	/* Start simulation */
 	simulate();
