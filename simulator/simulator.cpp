@@ -5,12 +5,14 @@
 #include "loader.hpp"
 #include "datapath.hpp"
 #include "error.hpp"
+//#define DEBUG
 
 std::ofstream fout;
 int num_inst, num_word, cycle;
 bool stop_simulate;
 
 inline void print_reg(int idx, bool &first) {
+	/* Print changed registers into snapshot.rpt. */
 	static std::string reg_str[3]={"$HI","$LO","PC"};
 	if (first) {
 		fout<<std::dec<<"cycle "<<cycle<<std::endl;
@@ -26,6 +28,7 @@ inline void print_reg(int idx, bool &first) {
 
 void output()
 {
+	/* This function check whether register value is changed and output it if yes. */
 	bool first=true;
 	while (!change.empty()) {
 		int idx=change.front();
@@ -47,17 +50,25 @@ void output()
 
 void simulate()
 {	
-	init_str_const();
+	/* This function control the flow of simulate. */
 	int idx=(PC>>2), opcode=inst[idx].opcode, funct=inst[idx].funct;
+	
 	while (opcode!=HALT && !stop_simulate) {
 		cycle++;
 		std::cerr<<"cycle "<<std::dec<<cycle<<": ";
-		std::cerr<<reg[4]<<" ";
 		print_inst(&inst[idx]);
 		if (opcode==0) {
+			if (!legal_r[funct]) {
+				std::cerr<<"illegal instruction found at 0x"<<std::setw(8)<<std::setfill('0')<<std::hex<<std::uppercase<<PC<<std::endl;
+				return;
+			}
 			//fout<<inst_str_r[funct]<<"\n";
 			(*R_func[funct])();
 		} else {
+			if (!legal[opcode]) {
+				std::cerr<<"illegal instruction found at 0x"<<std::setw(8)<<std::setfill('0')<<std::hex<<std::uppercase<<PC<<std::endl;
+				return;
+			}
 			//fout<<inst_str[opcode]<<"\n";
 			(*func[opcode])();
 		}
@@ -72,10 +83,15 @@ void simulate()
 int main()
 {	
 	bool first=true;
-	fout.open("my_snapshot.rpt",std::ios_base::out);
-	load_img(PC,num_inst,num_word,sp);
+
+	/* Initialization */	
 	init_error();
+	init_const();
 	init_datapath();
+	load_img(PC,num_inst,num_word,sp);
+	fout.open("my_snapshot.rpt",std::ios_base::out);
+	
+	#ifdef DEBUG
 	for (int i=PC>>2;i<(PC>>2)+num_inst;i++) {
 		print_inst(&inst[i]);
 	}
@@ -86,6 +102,8 @@ int main()
 		print_reg(i,first);
 	}
 	fout<<"\n\n";
+	#endif
+	
+	/* Start simulation */
 	simulate();
-	btol(100);
 }

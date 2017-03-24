@@ -1,0 +1,22 @@
+cycle 1
+PC: 0x00000004
+
+
+cycle 2
+PC: 0x00000008
+
+
+cycle 3
+$06: 0xFFFF0000
+PC: 0x0000000C
+
+
+cycle 4
+$06: 0xFFFEFFFF
+PC: 0x00000010
+
+
+cycle 5
+PC: 0x00000014
+
+

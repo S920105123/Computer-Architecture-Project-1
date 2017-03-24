@@ -1,7 +1,10 @@
 #include "error.hpp"
 #include "datapath.hpp"
 #include "loader.hpp" 
+#include <climits>
 #include <queue>
+
+extern bool stop_simulate;
 
 /* Convesion between big/little endian */
 extern int btol(int target);
@@ -26,6 +29,11 @@ void inst_add() {
 		reg[rd]=reg[rs]+reg[rt];
 		change.push(rd);
 	}
+	if ((reg[rs]>0&&reg[rt]>0&&reg[rs]>INT_MAX-reg[rt]) ||
+	    (reg[rs]<0&&reg[rt]<0&&reg[rs]<INT_MIN-reg[rt])) {
+			error(NUM_OVF);
+	}
+	
 	PC=PC+4;
 }
 void inst_addu() {
@@ -45,6 +53,10 @@ void inst_sub() {
 	} else {
 		reg[rd]=reg[rs]-reg[rt];
 		change.push(rd);
+	}
+	if ((reg[rs]>0&&-reg[rt]>0&&reg[rs]>INT_MAX+reg[rt]) ||
+	    (reg[rs]<0&&-reg[rt]<0&&reg[rs]<INT_MIN+reg[rt])) {
+			error(NUM_OVF);
 	}
 	PC=PC+4;
 }
@@ -123,8 +135,7 @@ void inst_srl() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		if (immediate!=0) {
-			
+		if (immediate!=0) {	
 			change.push(rd);
 			reg[rd]=reg[rt]>>1;
 			reg[rd]=reg[rd]&0x7FFFFFFF;
@@ -209,6 +220,10 @@ void inst_addi() {
 		reg[rt]=reg[rs]+immediate;
 		change.push(rt);
 	}
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+			error(NUM_OVF);
+	}
 	PC=PC+4;
 }
 void inst_addiu() {
@@ -222,73 +237,194 @@ void inst_addiu() {
 	PC=PC+4;
 }
 void inst_lw() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (rt==0) {
 		error(WRITE_ZERO);
-	} else {
-		reg[rt]=mem[reg[rs]+(immediate>>2)];
+		block=true;
+	}
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	}
+	if (reg[rs]+immediate<0 || reg[rs]+immediate+3>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if ((reg[rs]+immediate)%4!=0) {
+		error(DATA_MISALIGNED);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block) {
+		reg[rt]=mem[(reg[rs]>>2)+(immediate>>2)];
 		reg[rt]=btol(reg[rt]);
 		change.push(rt);
-	} 
+	}
 	PC=PC+4;
 }
 void inst_lh() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (rt==0) {
 		error(WRITE_ZERO);
-	} else {
-		reg[rt]=*((short*)mem+reg[rs]+(immediate>>1));
+		block=true;
+	}
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	}
+	if (reg[rs]+immediate<0 || reg[rs]+immediate+1>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if ((reg[rs]+immediate)%2!=0) {
+		error(DATA_MISALIGNED);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block) {
+		reg[rt]=*((short*)mem+(reg[rs]>>1)+(immediate>>1));
 		reg[rt]=h_btol((short)reg[rt]);
 		change.push(rt);
-	} 
+	}
 	PC=PC+4;
 }
 void inst_lhu() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (rt==0) {
 		error(WRITE_ZERO);
-	} else {
-		reg[rt]=*((unsigned short*)mem+reg[rs]+(immediate>>1));
+		block=true;
+	}
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	} 
+	if (reg[rs]+immediate<0 || reg[rs]+immediate+1>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if ((reg[rs]+immediate)%2!=0) {
+		error(DATA_MISALIGNED);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block) {
+		reg[rt]=*((unsigned short*)mem+(reg[rs]>>1)+(immediate>>1));
 		reg[rt]=(unsigned short)h_btol(reg[rt]);
 		reg[rt]=reg[rt]&0x0000FFFF;  // Just in case.
 		change.push(rt);
-	} 
+	}
 	PC=PC+4;
 }
 void inst_lb() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (rt==0) {
 		error(WRITE_ZERO);
-	} else {
+		block=true;
+	}
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	}
+	if (reg[rs]+immediate<0 || reg[rs]+immediate>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block){
 		reg[rt]=*((char*)mem+reg[rs]+immediate);
 		change.push(rt);
-	} 
+	}
 	PC=PC+4;
 }
 void inst_lbu() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
 	if (rt==0) {
 		error(WRITE_ZERO);
-	} else {
+		block=true;
+	}
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	}
+	if (reg[rs]+immediate<0 || reg[rs]+immediate>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block){
 		reg[rt]=*((unsigned char*)mem+reg[rs]+immediate);
 		reg[rt]=reg[rt]&0x000000FF;  // Just in case.
 		change.push(rt);
-	} 
+	}
 	PC=PC+4;
 }
 void inst_sw() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	mem[reg[rs]+(immediate>>2)]=btol(reg[rt]);
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	}
+	if (reg[rs]+immediate<0 || reg[rs]+immediate+3>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if ((reg[rs]+immediate)%4!=0) {
+		error(DATA_MISALIGNED);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block) {
+		mem[(reg[rs]>>2)+(immediate>>2)]=btol(reg[rt]);
+	}
 	PC=PC+4;
 }
 void inst_sh() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	*((short*)mem+reg[rs]+(immediate>>1))=btol(reg[rt])&0x0000FFFF;
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	}
+	if (reg[rs]+immediate<0 || reg[rs]+immediate+1>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if ((reg[rs]+immediate)%2!=0) {
+		error(DATA_MISALIGNED);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block) {
+		*((short*)mem+(reg[rs]>>1)+(immediate>>1))=btol(reg[rt])&0x0000FFFF;
+	}
 	PC=PC+4;
 }
 void inst_sb() {
+	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	*((char*)mem+reg[rs]+immediate)=btol(reg[rt])&0x000000FF;
+	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
+	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+		error(NUM_OVF);
+	}
+	if (reg[rs]+immediate<0 || reg[rs]+immediate>=1024)  {
+		error(MEM_ADDR_OVF);
+		stop_simulate=true;
+		block=true;
+	}
+	if (!block) {
+		*((char*)mem+reg[rs]+immediate)=btol(reg[rt])&0x000000FF;
+	}
 	PC=PC+4;
 }
 void inst_lui() {

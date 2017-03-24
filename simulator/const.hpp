@@ -22,8 +22,12 @@ const int ADDI  = 0x08,  ADDIU = 0x09,  LW    = 0x23,
 /* Opcode of J-format and S-format instructions. */
 const int J     = 0x02,  JAL   = 0x03,  HALT  = 0x3F;
 
-/* Store the name of every instruction. Call init_const() to init. */
-extern std::string inst_str_r[256], inst_str[256];
+/* Store the name of every instruction. Call init_str_const() to init. */
+extern std::string inst_str_r[64], inst_str[64];
 void init_str_const();
+
+/* Store whether instruction is legal. Call init_const() to init */
+extern bool legal[64], legal_r[64];
+void init_const();
 
 #endif
