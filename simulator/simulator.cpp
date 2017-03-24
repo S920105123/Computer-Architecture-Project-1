@@ -72,7 +72,9 @@ void simulate()
 			//fout<<inst_str[opcode]<<"\n";
 			(*func[opcode])();
 		}
-		output();
+		if (!stop_simulate) {
+			output();
+		}
 		
 		idx=PC>>2;
 		opcode=inst[idx].opcode;
