@@ -3164,6 +3164,6 @@ In cycle 43626: Overwrite HI-LO registers
 In cycle 43635: Number Overflow
 In cycle 43650: Overwrite HI-LO registers
 In cycle 43655: Overwrite HI-LO registers
-In cycle 43661: Write $0 Error
-In cycle 43661: Address Overflow
-In cycle 43661: Misalignment Error
+In cycle 43662: Write $0 Error
+In cycle 43662: Address Overflow
+In cycle 43662: Misalignment Error
