@@ -185,6 +185,45 @@ lw 8 11 0
 addi 8 8 4
 beq 0 0 -5
 
+lui 0 12 0x1234
+ori 12 12 0x5678
+lui 0 13 0x1324
+ori 13 13 0x76AB
+lui 0 14 0xACBD
+ori 14 14 0xEFAA
+lui 0 15 0x0187
+ori 15 15 0xACE2
+addi 0 16 0
+slti 16 17 0x400
+beq 18 17 0x1B
+xor 12 13 12 0
+xor 14 15 13 0
+nor 14 14 14 0
+xor 12 14 15 0
+add 12 15 13 0
+sub 13 14 14 0
+addu 13 14 15 0
+add 15 14 12 0
+add 15 29 15 0
+add 14 29 14 0
+add 13 29 13 0
+add 12 29 12 0
+addi 16 16 1
+or 12 13 17 0
+nor 13 14 17 0
+nand 14 15 17 0
+slt 14 15 17 0
+sll 13 15 17 7
+srl 12 15 17 7
+sra 15 12 17 7
+mult 12 13 17 0
+mfhi 0 0 17 0
+multu 13 14 17 0
+mflo 0 0 17 0
+mult 14 15 17 0
+multu 12 13 17 0
+beq 0 0 -0x1D
+
 lui 10 10 0x7FFF
 ori 10 10 0xFFFC
 lw 10 0 0x1
