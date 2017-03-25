@@ -13,7 +13,7 @@ extern short h_btol(short target);
 /* Registers */
 std::queue<int> change;
 int reg[35], HI=32, LO=33, &PC=reg[34], &sp=reg[29];
-int pre_reg[35], &pre_PC=pre_reg[34];
+int pre_reg[35], &pre_PC=pre_reg[34], &pre_sp=reg[29];
 bool hilo_used=false;
 
 /* Function pointers */
@@ -26,12 +26,12 @@ void inst_add() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rs]+reg[rt];
+		reg[rd]=pre_reg[rs]+pre_reg[rt];
 		change.push(rd);
 	}
-	std::cerr<<reg[rs]<<' '<<reg[rt]<<' '<<INT_MAX<<std::endl;
-	if ((reg[rs]>0&&reg[rt]>0&&reg[rs]>INT_MAX-reg[rt]) ||
-	    (reg[rs]<0&&reg[rt]<0&&reg[rs]<INT_MIN-reg[rt])) {
+	std::cerr<<pre_reg[rs]<<' '<<pre_reg[rt]<<' '<<INT_MAX<<std::endl;
+	if ((pre_reg[rs]>0&&pre_reg[rt]>0&&pre_reg[rs]>INT_MAX-pre_reg[rt]) ||
+	    (pre_reg[rs]<0&&pre_reg[rt]<0&&pre_reg[rs]<INT_MIN-pre_reg[rt])) {
 			std::cerr<<"ovf\n";
 			error(NUM_OVF);
 	}
@@ -43,7 +43,7 @@ void inst_addu() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rs]+reg[rt];
+		reg[rd]=pre_reg[rs]+pre_reg[rt];
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -53,11 +53,11 @@ void inst_sub() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rs]-reg[rt];
+		reg[rd]=pre_reg[rs]-pre_reg[rt];
 		change.push(rd);
 	}
-	if ((reg[rs]>0&&-reg[rt]>0&&reg[rs]>INT_MAX+reg[rt]) ||
-	    (reg[rs]<0&&-reg[rt]<0&&reg[rs]<INT_MIN+reg[rt])) {
+	if ((pre_reg[rs]>0&&-pre_reg[rt]>0&&pre_reg[rs]>INT_MAX+pre_reg[rt]) ||
+	    (pre_reg[rs]<0&&-pre_reg[rt]<0&&pre_reg[rs]<INT_MIN+pre_reg[rt])) {
 			error(NUM_OVF);
 	}
 	PC=PC+4;
@@ -67,7 +67,7 @@ void inst_and() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rs]&reg[rt];
+		reg[rd]=pre_reg[rs]&pre_reg[rt];
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -77,7 +77,7 @@ void inst_or() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rs]|reg[rt];
+		reg[rd]=pre_reg[rs]|pre_reg[rt];
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -87,7 +87,7 @@ void inst_xor() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rs]^reg[rt];
+		reg[rd]=pre_reg[rs]^pre_reg[rt];
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -97,7 +97,7 @@ void inst_nor() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=~(reg[rs]|reg[rt]);
+		reg[rd]=~(pre_reg[rs]|pre_reg[rt]);
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -107,7 +107,7 @@ void inst_nand() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=!(reg[rs]&reg[rt]);
+		reg[rd]=!(pre_reg[rs]&pre_reg[rt]);
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -117,7 +117,7 @@ void inst_slt() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rs]<reg[rt];
+		reg[rd]=pre_reg[rs]<pre_reg[rt];
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -127,7 +127,7 @@ void inst_sll() {
 	if (rd==0 && (rt!=0||immediate!=0)) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rt]<<immediate;
+		reg[rd]=pre_reg[rt]<<immediate;
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -139,7 +139,7 @@ void inst_srl() {
 	} else {
 		if (immediate!=0) {	
 			change.push(rd);
-			reg[rd]=reg[rt]>>1;
+			reg[rd]=pre_reg[rt]>>1;
 			reg[rd]=reg[rd]&0x7FFFFFFF;
 			reg[rd]=reg[rd]>>(immediate-1);
 		}
@@ -151,24 +151,24 @@ void inst_sra() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[rt]>>immediate;
+		reg[rd]=pre_reg[rt]>>immediate;
 		change.push(rd);
 	}
 	PC=PC+4;
 }
 void inst_jr() {
 	int rs=inst[PC>>2].rs;
-	PC=reg[rs];
+	PC=pre_reg[rs];
 }
 void inst_mult() {
 	int rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	long long res=reg[rs];
+	long long res=pre_reg[rs];
 	if (hilo_used) {
 		error(OVERWRITE_HILO);
 	} else {
 		hilo_used=true;
 	}
-	res=res*reg[rt];
+	res=res*pre_reg[rt];
 	reg[HI]=res>>32;
 	reg[LO]=res&0x00000000FFFFFFFF;
 	change.push(HI);
@@ -177,8 +177,8 @@ void inst_mult() {
 }
 void inst_multu() {
 	int rs=inst[PC>>2].rs, rt=inst[PC>>2].rt;
-	unsigned long long res=(unsigned int)reg[rs];
-	res=res*(unsigned int)reg[rt];
+	unsigned long long res=(unsigned int)pre_reg[rs];
+	res=res*(unsigned int)pre_reg[rt];
 	if (hilo_used) {
 		error(OVERWRITE_HILO);
 	} else {
@@ -195,7 +195,7 @@ void inst_mfhi() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[HI];
+		reg[rd]=pre_reg[HI];
 		change.push(rd);
 	}
 	hilo_used=false;
@@ -207,7 +207,7 @@ void inst_mflo() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=reg[LO];
+		reg[rd]=pre_reg[LO];
 		change.push(rd);
 	}	
 	PC=PC+4;
@@ -219,11 +219,11 @@ void inst_addi() {
 	if (rt==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rt]=reg[rs]+immediate;
+		reg[rt]=pre_reg[rs]+immediate;
 		change.push(rt);
 	}
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 			error(NUM_OVF);
 	}
 	PC=PC+4;
@@ -233,7 +233,7 @@ void inst_addiu() {
 	if (rt==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rt]=reg[rs]+immediate;
+		reg[rt]=pre_reg[rs]+immediate;
 		change.push(rt);
 	} 
 	PC=PC+4;
@@ -245,22 +245,22 @@ void inst_lw() {
 		error(WRITE_ZERO);
 		block=true;
 	}
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	}
-	if (reg[rs]+immediate<0 || reg[rs]+immediate+3>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate+3>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
-	if ((reg[rs]+immediate)%4!=0) {
+	if ((pre_reg[rs]+immediate)%4!=0) {
 		error(DATA_MISALIGNED);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block) {
-		reg[rt]=mem[(reg[rs]>>2)+(immediate>>2)];
+		reg[rt]=mem[(pre_reg[rs]>>2)+(immediate>>2)];
 		reg[rt]=btol(reg[rt]);
 		change.push(rt);
 	}
@@ -273,22 +273,22 @@ void inst_lh() {
 		error(WRITE_ZERO);
 		block=true;
 	}
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	}
-	if (reg[rs]+immediate<0 || reg[rs]+immediate+1>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate+1>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
-	if ((reg[rs]+immediate)%2!=0) {
+	if ((pre_reg[rs]+immediate)%2!=0) {
 		error(DATA_MISALIGNED);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block) {
-		reg[rt]=*((short*)mem+(reg[rs]>>1)+(immediate>>1));
+		reg[rt]=*((short*)mem+(pre_reg[rs]>>1)+(immediate>>1));
 		reg[rt]=h_btol((short)reg[rt]);
 		change.push(rt);
 	}
@@ -301,22 +301,22 @@ void inst_lhu() {
 		error(WRITE_ZERO);
 		block=true;
 	}
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	} 
-	if (reg[rs]+immediate<0 || reg[rs]+immediate+1>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate+1>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
-	if ((reg[rs]+immediate)%2!=0) {
+	if ((pre_reg[rs]+immediate)%2!=0) {
 		error(DATA_MISALIGNED);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block) {
-		reg[rt]=*((unsigned short*)mem+(reg[rs]>>1)+(immediate>>1));
+		reg[rt]=*((unsigned short*)mem+(pre_reg[rs]>>1)+(immediate>>1));
 		reg[rt]=(unsigned short)h_btol(reg[rt]);
 		reg[rt]=reg[rt]&0x0000FFFF;  // Just in case.
 		change.push(rt);
@@ -330,17 +330,17 @@ void inst_lb() {
 		error(WRITE_ZERO);
 		block=true;
 	}
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	}
-	if (reg[rs]+immediate<0 || reg[rs]+immediate>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block){
-		reg[rt]=*((char*)mem+reg[rs]+immediate);
+		reg[rt]=*((char*)mem+pre_reg[rs]+immediate);
 		change.push(rt);
 	}
 	PC=PC+4;
@@ -352,17 +352,17 @@ void inst_lbu() {
 		error(WRITE_ZERO);
 		block=true;
 	}
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	}
-	if (reg[rs]+immediate<0 || reg[rs]+immediate>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block){
-		reg[rt]=*((unsigned char*)mem+reg[rs]+immediate);
+		reg[rt]=*((unsigned char*)mem+pre_reg[rs]+immediate);
 		reg[rt]=reg[rt]&0x000000FF;  // Just in case.
 		change.push(rt);
 	}
@@ -371,61 +371,61 @@ void inst_lbu() {
 void inst_sw() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	}
-	if (reg[rs]+immediate<0 || reg[rs]+immediate+3>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate+3>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
-	if ((reg[rs]+immediate)%4!=0) {
+	if ((pre_reg[rs]+immediate)%4!=0) {
 		error(DATA_MISALIGNED);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block) {
-		mem[(reg[rs]>>2)+(immediate>>2)]=btol(reg[rt]);
+		mem[(pre_reg[rs]>>2)+(immediate>>2)]=btol(reg[rt]);
 	}
 	PC=PC+4;
 }
 void inst_sh() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	}
-	if (reg[rs]+immediate<0 || reg[rs]+immediate+1>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate+1>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
-	if ((reg[rs]+immediate)%2!=0) {
+	if ((pre_reg[rs]+immediate)%2!=0) {
 		error(DATA_MISALIGNED);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block) {
-		*((short*)mem+(reg[rs]>>1)+(immediate>>1))=btol(reg[rt])&0x0000FFFF;
+		*((short*)mem+(pre_reg[rs]>>1)+(immediate>>1))=btol(reg[rt])&0x0000FFFF;
 	}
 	PC=PC+4;
 }
 void inst_sb() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
-	if ((reg[rs]>0&&immediate>0&&reg[rs]>INT_MAX-immediate) ||
-	    (reg[rs]<0&&immediate<0&&reg[rs]<INT_MIN-immediate)) {
+	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
+	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
 	}
-	if (reg[rs]+immediate<0 || reg[rs]+immediate>=1024)  {
+	if (pre_reg[rs]+immediate<0 || pre_reg[rs]+immediate>=1024)  {
 		error(MEM_ADDR_OVF);
 		stop_simulate=true;
 		block=true;
 	}
 	if (!block) {
-		*((char*)mem+reg[rs]+immediate)=btol(reg[rt])&0x000000FF;
+		*((char*)mem+pre_reg[rs]+immediate)=btol(reg[rt])&0x000000FF;
 	}
 	PC=PC+4;
 }
@@ -444,7 +444,7 @@ void inst_andi() {
 	if (rt==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rt]=reg[rs]&immediate;
+		reg[rt]=pre_reg[rs]&immediate;
 		change.push(rt);
 	} 
 	PC=PC+4;
@@ -454,7 +454,7 @@ void inst_ori() {
 	if (rt==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rt]=reg[rs]|immediate;
+		reg[rt]=pre_reg[rs]|immediate;
 		change.push(rt);
 	} 
 	PC=PC+4;
@@ -464,7 +464,7 @@ void inst_nori() {
 	if (rt==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rt]=~(reg[rs]|immediate);
+		reg[rt]=~(pre_reg[rs]|immediate);
 		change.push(rt);
 	} 
 	PC=PC+4;
@@ -474,7 +474,7 @@ void inst_slti() {
 	if (rt==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rt]=reg[rs]<immediate;
+		reg[rt]=pre_reg[rs]<immediate;
 		change.push(rt);
 	} 
 	PC=PC+4;

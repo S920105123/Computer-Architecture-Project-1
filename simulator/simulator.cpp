@@ -93,7 +93,7 @@ int main()
 	init_error();
 	init_const();
 	init_datapath();
-	load_img(PC,num_inst,num_word,sp);
+	load_img(PC,num_inst,num_word,sp,pre_sp);
 	fout.open("snapshot.rpt",std::ios_base::out);
 	
 	#ifdef DEBUG

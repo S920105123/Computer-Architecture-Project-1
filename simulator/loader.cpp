@@ -86,7 +86,7 @@ void print_inst(const Instruction *target)
 	std::cout<<std::endl;
 }
 
-void load_img(int &PC, int &num_inst, int &num_word, int &sp)
+void load_img(int &PC, int &num_inst, int &num_word, int &sp, int &pre_sp)
 {
 	/* This function load iimage & dimage then reset instruction set(inst),
 	   stack(stk), initial PC, number of instructions and stack pointer(sp).  */
@@ -116,6 +116,7 @@ void load_img(int &PC, int &num_inst, int &num_word, int &sp)
 	d_img.read((char*)&sp,4);
 	d_img.read((char*)&num_word,4);
 	sp=btol(sp);
+	pre_sp=sp;
 	num_word=btol(num_word);
 	for (i=0;i<num_word;i++) {
 		d_img.read((char*)&mem[i],4);
