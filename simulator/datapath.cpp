@@ -31,7 +31,7 @@ void inst_add() {
 	}
 	if ((pre_reg[rs]>0&&pre_reg[rt]>0&&pre_reg[rs]>INT_MAX-pre_reg[rt]) ||
 	    (pre_reg[rs]<0&&pre_reg[rt]<0&&pre_reg[rs]<INT_MIN-pre_reg[rt])) {
-			std::cerr<<"ovf\n";
+			//std::cerr<<"ovf\n";
 			error(NUM_OVF);
 	}
 	
