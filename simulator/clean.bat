@@ -1,1 +1,0 @@
-del *.tmp *.o *.exe *.out *.gch *.stackdump
