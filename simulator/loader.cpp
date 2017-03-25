@@ -68,13 +68,15 @@ void print_inst(const Instruction *target)
 {
 	/* This function print an instruction. (for debugging) */
 	static bool first=true;
+	static int count;
 	if (first) {
 		first=false;
 		init_str_const();
 	}
+	std::cerr<<count++<<": ";
 	if (target->opcode==0) {
 		std::cerr<<inst_str_r[target->funct];
-		std::cerr<<std::dec<<" "<<target->rd<<" "<<target->rs<<" "<<target->rt;
+		std::cerr<<std::dec<<" "<<target->rd<<" "<<target->rs<<" "<<target->rt<<" "<<target->immediate;
 	} else {
 		std::cerr<<inst_str[target->opcode];
 		if (target->opcode==J || target->opcode==JAL) {

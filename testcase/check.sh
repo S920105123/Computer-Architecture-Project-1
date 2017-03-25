@@ -12,5 +12,5 @@ cd ../simulator
 cd ../testcase
 
 echo -------------diff-------------
-diff ../golden/snapshot.rpt ../simulator/snapshot.rpt
-diff ../golden/error_dump.rpt ../simulator/error_dump.rpt
+diff -c ../golden/snapshot.rpt ../simulator/snapshot.rpt
+diff -c ../golden/error_dump.rpt ../simulator/error_dump.rpt

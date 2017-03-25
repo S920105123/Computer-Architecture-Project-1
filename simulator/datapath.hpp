@@ -5,7 +5,7 @@
 
 /* Registers */
 extern int reg[35], HI, LO, &PC, &sp;
-extern int pre_reg[35], &pre_PC;
+extern int pre_reg[35], &pre_PC, &pre_sp;
 extern std::queue<int> change;
 
 /* Function pointers, R_func[ADD]=add function, etc. */

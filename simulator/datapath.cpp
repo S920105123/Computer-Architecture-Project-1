@@ -13,7 +13,7 @@ extern short h_btol(short target);
 /* Registers */
 std::queue<int> change;
 int reg[35], HI=32, LO=33, &PC=reg[34], &sp=reg[29];
-int pre_reg[35], &pre_PC=pre_reg[34], &pre_sp=reg[29];
+int pre_reg[35], &pre_PC=pre_reg[34], &pre_sp=pre_reg[29];
 bool hilo_used=false;
 
 /* Function pointers */
@@ -29,7 +29,6 @@ void inst_add() {
 		reg[rd]=pre_reg[rs]+pre_reg[rt];
 		change.push(rd);
 	}
-	std::cerr<<pre_reg[rs]<<' '<<pre_reg[rt]<<' '<<INT_MAX<<std::endl;
 	if ((pre_reg[rs]>0&&pre_reg[rt]>0&&pre_reg[rs]>INT_MAX-pre_reg[rt]) ||
 	    (pre_reg[rs]<0&&pre_reg[rt]<0&&pre_reg[rs]<INT_MIN-pre_reg[rt])) {
 			std::cerr<<"ovf\n";
@@ -107,7 +106,7 @@ void inst_nand() {
 	if (rd==0) {
 		error(WRITE_ZERO);
 	} else {
-		reg[rd]=!(pre_reg[rs]&pre_reg[rt]);
+		reg[rd]=~(pre_reg[rs]&pre_reg[rt]);
 		change.push(rd);
 	}
 	PC=PC+4;
@@ -142,6 +141,9 @@ void inst_srl() {
 			reg[rd]=pre_reg[rt]>>1;
 			reg[rd]=reg[rd]&0x7FFFFFFF;
 			reg[rd]=reg[rd]>>(immediate-1);
+		} else {
+			change.push(rd);
+			reg[rd]=pre_reg[rt];
 		}
 	}
 	PC=PC+4;
