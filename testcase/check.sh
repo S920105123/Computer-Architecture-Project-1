@@ -10,5 +10,7 @@ cd ../golden
 cd ../simulator
 ./single_cycle
 cd ../testcase
+
+echo -------------diff-------------
 diff ../golden/snapshot.rpt ../simulator/snapshot.rpt
 diff ../golden/error_dump.rpt ../simulator/error_dump.rpt

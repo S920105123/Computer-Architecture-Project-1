@@ -19,6 +19,7 @@ int main()
 	i=0;
 	cin>>PC;
 	while (cin>>inst) {
+		cout<<"Eat "<<inst<<endl;
 		if (R_code.find(inst)!=R_code.end()) {
 			cin>>dec>>rs>>rt>>rd>>hex>>imm;
 			word=(rs<<21)|(rt<<16)|(rd<<11)|(imm<<6)|R_code[inst];

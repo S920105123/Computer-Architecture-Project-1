@@ -29,8 +29,10 @@ void inst_add() {
 		reg[rd]=reg[rs]+reg[rt];
 		change.push(rd);
 	}
+	std::cerr<<reg[rs]<<' '<<reg[rt]<<' '<<INT_MAX<<std::endl;
 	if ((reg[rs]>0&&reg[rt]>0&&reg[rs]>INT_MAX-reg[rt]) ||
 	    (reg[rs]<0&&reg[rt]<0&&reg[rs]<INT_MIN-reg[rt])) {
+			std::cerr<<"ovf\n";
 			error(NUM_OVF);
 	}
 	

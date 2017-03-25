@@ -1,8 +1,18 @@
-0
-add 5 6 0 0
-addu 6 4 3 0
-lui 5 6 0xFFFF
-addi 6 6 0xFFFF
-sw 6 5 1
-j 16
+24
+lw 27 27 0x8
+beq 31 27 0xA
+lw 0 29 0x8
+lui 20 29 0x7FFF
+addi 29 29 0xFFFE
+addi 31 31 0x1
+addu 31 29 31 0
+sub 31 29 31 0
+add 31 29 31 0
+add 31 29 31 0
+addi 31 31 2
+j 0
+lui 10 10 0x7FFF
+ori 10 10 0xFFFE
+lw 10 10 0x100
+halt
 halt

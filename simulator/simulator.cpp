@@ -5,7 +5,7 @@
 #include "loader.hpp"
 #include "datapath.hpp"
 #include "error.hpp"
-//#define DEBUG
+#define DEBUG
 
 std::ofstream fout;
 int num_inst, num_word, cycle;
@@ -54,6 +54,9 @@ void simulate()
 	int idx=(PC>>2), opcode=inst[idx].opcode, funct=inst[idx].funct;
 	
 	while (opcode!=HALT && !stop_simulate) {
+		if (PC>=1024 || PC<0) {
+			return;
+		}
 		cycle++;
 		std::cerr<<"cycle "<<std::dec<<cycle<<": ";
 		print_inst(&inst[idx]);
