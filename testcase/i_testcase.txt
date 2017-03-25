@@ -153,7 +153,7 @@ jal 0x18
 beq 30 29 1 
 
 addi 0 8 0
-slti 8 9 0x008
+slti 8 9 0x400
 beq 0 9 4
 lw 8 11 0
 sw 8 11 0
@@ -161,7 +161,7 @@ addi 8 8 4
 beq 0 0 -6
 
 addi 0 8 0
-slti 8 9 0x008
+slti 8 9 0x400
 beq 0 9 5
 lhu 8 11 0
 lh 8 11 0
@@ -170,15 +170,16 @@ addi 8 8 2
 beq 0 0 -7
 
 addi 0 8 0
-slti 8 9 0x008
-beq 0 9 4
-lb 8 11 0
+slti 8 9 0x400
+beq 0 9 5
 lbu 8 11 0
+lb 8 11 0
+sb 8 11 0
 addi 8 8 1
-beq 0 0 -6
+beq 0 0 -7
 
 addi 0 8 0
-slti 8 9 0x008
+slti 8 9 0x400
 beq 0 9 3
 lw 8 11 0
 addi 8 8 4

@@ -88,6 +88,6 @@ In cycle 336: Write $0 Error
 In cycle 338: Write $0 Error
 In cycle 339: Write $0 Error
 In cycle 368: Write $0 Error
-In cycle 484: Write $0 Error
-In cycle 484: Address Overflow
-In cycle 484: Misalignment Error
+In cycle 13954: Write $0 Error
+In cycle 13954: Address Overflow
+In cycle 13954: Misalignment Error

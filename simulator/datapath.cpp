@@ -410,7 +410,7 @@ void inst_sh() {
 		block=true;
 	}
 	if (!block) {
-		*((short*)mem+(pre_reg[rs]>>1)+(immediate>>1))=btol(reg[rt])&0x0000FFFF;
+		*((short*)mem+(pre_reg[rs]>>1)+(immediate>>1))=h_btol(reg[rt]&0x0000FFFF);
 	}
 	PC=PC+4;
 }
@@ -427,7 +427,7 @@ void inst_sb() {
 		block=true;
 	}
 	if (!block) {
-		*((char*)mem+pre_reg[rs]+immediate)=btol(reg[rt])&0x000000FF;
+		*((char*)mem+pre_reg[rs]+immediate)=reg[rt]&0x000000FF;
 	}
 	PC=PC+4;
 }
