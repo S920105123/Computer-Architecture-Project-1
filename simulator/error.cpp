@@ -2,7 +2,7 @@
 #include <string>
 
 extern int cycle;
-static std::ofstream ferr;
+std::ofstream ferr;
 std::string err_str[5] = {
 	"Write $0 Error\n",
 	"Number Overflow\n",

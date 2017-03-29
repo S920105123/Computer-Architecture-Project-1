@@ -1,6 +1,6 @@
-#include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <cstdio>
 #include "const.hpp"
 #include "loader.hpp"
 
@@ -91,40 +91,31 @@ void load_img(int &PC, int &num_inst, int &num_word, int &sp, int &pre_sp)
 	/* This function load iimage & dimage then reset instruction set(inst),
 	   stack(stk), initial PC, number of instructions and stack pointer(sp).  */
 	int word,i;
-	std::ifstream d_img, i_img;
+	FILE *i_img, *d_img;
 	
-	d_img.open("dimage.bin",std::ios_base::in | std::ios_base::binary);
-	i_img.open("iimage.bin",std::ios_base::in | std::ios_base::binary);
+	d_img=fopen("dimage.bin","rb");
+	i_img=fopen("iimage.bin","rb");
 	
 	/* Load instruction image. */
-	i_img.read((char*)&PC,4);
-	i_img.read((char*)&num_inst,4);
+	fread((char*)&PC,4,1,i_img);
+	fread((char*)&num_inst,4,1,i_img);
 	PC=btol(PC);
 	num_inst=btol(num_inst);
-	for (i=0;i<PC/4;i++) {
-		inst[i].opcode=inst[i].rs=inst[i].rt=inst[i].rd=inst[i].funct=inst[i].immediate=0;
-	}
-	for (;i<PC/4+num_inst;i++) {
-		i_img.read((char*)&word,4);
+	for (i=PC/4;i<PC/4+num_inst;i++) {
+		fread((char*)&word,4,1,i_img);
 		parse(&inst[i],word);
-	}
-	for (;i<1024;i++) {
-		inst[i].opcode=inst[i].rs=inst[i].rt=inst[i].rd=inst[i].funct=inst[i].immediate=0;
 	}
 	
 	/* Load memory data image. */
-	d_img.read((char*)&sp,4);
-	d_img.read((char*)&num_word,4);
+	fread((char*)&sp,4,1,d_img);
+	fread((char*)&num_word,4,1,d_img);
 	sp=btol(sp);
 	pre_sp=sp;
 	num_word=btol(num_word);
 	for (i=0;i<num_word;i++) {
-		d_img.read((char*)&mem[i],4);
-	}
-	for (;i<1024;i++) {
-		mem[i]=0;
+		fread((char*)&mem[i],4,1,d_img);
 	}
 	
-	i_img.close();
-	d_img.close();
+	fclose(i_img);
+	fclose(d_img);
 }

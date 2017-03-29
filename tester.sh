@@ -1,5 +1,7 @@
 #!/bin/bash
 
+time_start=$(date +%s%N)
+
 for dir in $(ls ./open)
 do
 	cp ./open/${dir}/dimage.bin ./simulator/dimage.bin
@@ -17,3 +19,6 @@ do
 		break
 	fi
 done
+
+time_end=$(date +%s%N)
+echo "   Total runtime: $(((time_end-time_start)/1000000))ms"
