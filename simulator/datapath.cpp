@@ -243,6 +243,7 @@ void inst_addiu() {
 void inst_lw() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	int offset=immediate+pre_reg[rs];
 	if (rt==0) {
 		error(WRITE_ZERO);
 		block=true;
@@ -262,7 +263,7 @@ void inst_lw() {
 		block=true;
 	}
 	if (!block) {
-		reg[rt]=mem[(pre_reg[rs]>>2)+(immediate>>2)];
+		reg[rt]=mem[offset>>2];
 		reg[rt]=btol(reg[rt]);
 		change.push(rt);
 	}
@@ -271,6 +272,7 @@ void inst_lw() {
 void inst_lh() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	int offset=immediate+pre_reg[rs];
 	if (rt==0) {
 		error(WRITE_ZERO);
 		block=true;
@@ -290,7 +292,7 @@ void inst_lh() {
 		block=true;
 	}
 	if (!block) {
-		reg[rt]=*((short*)mem+(pre_reg[rs]>>1)+(immediate>>1));
+		reg[rt]=*((short*)mem+(offset>>1));
 		reg[rt]=h_btol((short)reg[rt]);
 		change.push(rt);
 	}
@@ -299,6 +301,7 @@ void inst_lh() {
 void inst_lhu() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	int offset=immediate+pre_reg[rs];
 	if (rt==0) {
 		error(WRITE_ZERO);
 		block=true;
@@ -318,7 +321,7 @@ void inst_lhu() {
 		block=true;
 	}
 	if (!block) {
-		reg[rt]=*((unsigned short*)mem+(pre_reg[rs]>>1)+(immediate>>1));
+		reg[rt]=*((unsigned short*)mem+(offset>>1));
 		reg[rt]=(unsigned short)h_btol(reg[rt]);
 		reg[rt]=reg[rt]&0x0000FFFF;  // Just in case.
 		change.push(rt);
@@ -373,6 +376,7 @@ void inst_lbu() {
 void inst_sw() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	int offset=immediate+pre_reg[rs];
 	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
 	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
@@ -388,13 +392,14 @@ void inst_sw() {
 		block=true;
 	}
 	if (!block) {
-		mem[(pre_reg[rs]>>2)+(immediate>>2)]=btol(reg[rt]);
+		mem[offset>>2]=btol(reg[rt]);
 	}
 	PC=PC+4;
 }
 void inst_sh() {
 	bool block=false;
 	int rt=inst[PC>>2].rt, rs=inst[PC>>2].rs, immediate=inst[PC>>2].immediate;
+	int offset=immediate+pre_reg[rs];
 	if ((pre_reg[rs]>0&&immediate>0&&pre_reg[rs]>INT_MAX-immediate) ||
 	    (pre_reg[rs]<0&&immediate<0&&pre_reg[rs]<INT_MIN-immediate)) {
 		error(NUM_OVF);
@@ -410,7 +415,7 @@ void inst_sh() {
 		block=true;
 	}
 	if (!block) {
-		*((short*)mem+(pre_reg[rs]>>1)+(immediate>>1))=h_btol(reg[rt]&0x0000FFFF);
+		*((short*)mem+(offset>>1))=h_btol(reg[rt]&0x0000FFFF);
 	}
 	PC=PC+4;
 }
