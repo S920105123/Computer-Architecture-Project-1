@@ -12,9 +12,9 @@ do
 	diff ./open/${dir}/snapshot.rpt ./simulator/snapshot.rpt > diff_snapshot.tmp
 	diff ./open/${dir}/error_dump.rpt ./simulator/error_dump.rpt > diff_error.tmp
 	if [ "$(cat diff_snapshot.tmp)" = "" -a "$(cat diff_error.tmp)" = "" ]; then
-		echo "   Testcase: ${dir}\t- [Accecpted]..."
+		echo -e "   Testcase: ${dir}\t- [Accecpted]..."
 	else
-		echo "   Testcase: ${dir}\t- [Wrong Answer]..."
+		echo -e "   Testcase: ${dir}\t- [Wrong Answer]..."
 		echo "${dir}" > who
 		break
 	fi

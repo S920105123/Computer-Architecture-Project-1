@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <cstdio>
 #include <fstream>
 #include "const.hpp"
 #include "loader.hpp"
@@ -7,23 +8,35 @@
 #include "error.hpp"
 //#define DEBUG
 
-std::ofstream fout;
+FILE *fout;
 int num_inst, num_word, cycle;
+char buf[256];
 bool stop_simulate;
 
 inline void print_reg(int idx, bool &first) {
 	/* Print changed registers into snapshot.rpt. */
+	int len;
 	static std::string reg_str[3]={"$HI","$LO","PC"};
 	if (first) {
-		fout<<std::dec<<"cycle "<<cycle<<std::endl;
+		//fout<<std::dec<<"cycle "<<cycle<<std::endl;
+		len=sprintf(buf,"cycle %d\n",cycle);
+		fwrite(buf,1,len,fout);
 		first=false;
 	}
 	if (idx>31) {
-		fout<<reg_str[idx-32];
+		if (idx>33) {
+			fwrite(reg_str[idx-32].c_str(),1,2,fout);
+		} else {
+			fwrite(reg_str[idx-32].c_str(),1,3,fout);
+		}
 	} else {
-		fout<<"$"<<std::dec<<std::setw(2)<<std::setfill('0')<<idx;
+		//fout<<"$"<<std::dec<<std::setw(2)<<std::setfill('0')<<idx;
+		len=sprintf(buf,"$%02d",idx);
+		fwrite(buf,1,len,fout);
 	}
-	fout<<": 0x"<<std::hex<<std::uppercase<<std::setw(8)<<std::setfill('0')<<reg[idx]<<std::endl;
+	len=sprintf(buf,": 0x%08X\n",reg[idx]);
+	//fout<<": 0x"<<std::hex<<std::uppercase<<std::setw(8)<<std::setfill('0')<<reg[idx]<<std::endl;
+	fwrite(buf,1,len,fout);
 }
 
 void output()
@@ -44,7 +57,8 @@ void output()
 		pre_PC=PC;
 	}
 	if (!first) {
-		fout<<"\n\n";
+		buf[0]=buf[1]='\n';
+		fwrite(buf,1,2,fout);
 	}
 }
 
@@ -94,7 +108,7 @@ int main()
 	init_const();
 	init_datapath();
 	load_img(PC,num_inst,num_word,sp,pre_sp);
-	fout.open("snapshot.rpt",std::ios_base::out);
+	fout=fopen("snapshot.rpt","wb");
 	
 	#ifdef DEBUG
 	for (int i=PC>>2;i<(PC>>2)+num_inst;i++) {
@@ -107,10 +121,11 @@ int main()
 	for (int i=0;i<35;i++) {
 		print_reg(i,first);
 	}
-	fout<<"\n\n";
+	buf[0]=buf[1]='\n';
+	fwrite(buf,1,2,fout);
 	
 	/* Start simulation */
 	simulate();
-	ferr.close();
-	fout.close();
+	fclose(ferr);
+	fclose(fout);
 }
